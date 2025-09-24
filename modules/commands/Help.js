@@ -2,10 +2,10 @@ module.exports.config = {
   name: "اوامر",
   version: "1.0.2",
   hasPermssion: 0,
-  credits: "حمودي سان 🇸🇩",
+  credits: "كولو سان 🇸🇩",
   description: "قائمة الأوامر كاملة",
   commandCategory: "النظام",
-  usages: "[Name module]",
+  usages: "[اسم الأمر | رقم الصفحة]",
   cooldowns: 5,
   envConfig: {
     autoUnsend: true,
@@ -15,11 +15,11 @@ module.exports.config = {
 
 module.exports.languages = {
   "en": {
-    "moduleInfo": "🍭✨ 「 %1 」 ✨🍬\n🍬 %2 🍭\n\n📌 Usage: %3\n📂 Category: %4\n⏳ Waiting time: %5 seconds\n👑 Permission: %6\n\n🍭 Coded with love by %7 🍬",
-    "helpList": "🍬🍭 There are %1 fun commands in Dora Bot! 🍭🍬\nUse: ✨ “%2help nameCommand” ✨ to see how to use each one! 🍬\n━━━━━━━━━━━━━━━━━━━",
-    "user": "🍭 Sweet User 🍬",
-    "adminGroup": "🍬 Group Princess (Admin) 🍭",
-    "adminBot": "👑 Dora’s Magical Admin 👑"
+    "moduleInfo": "✨『 %1 』✨\n📜 الوصف: %2\n⚡ الاستخدام: %3\n📂 الفئة: %4\n⏳ وقت الانتظار: %5 ثانية\n👑 الصلاحية: %6\n\n💡 المطور: %7",
+    "helpList": "⚡ يوجد %1 من الأوامر في البوت ⚡\nاستخدم: %2help اسم_الأمر لعرض التفاصيل.\n━━━━━━━━━━━━━━━",
+    "user": "👤 مستخدم",
+    "adminGroup": "👑 مشرف المجموعة",
+    "adminBot": "🔱 مطور البوت"
   }
 };
 
@@ -59,37 +59,41 @@ module.exports.run = function ({ api, event, args, getText }) {
   const { autoUnsend, delayUnsend } = global.configModule[this.config.name];
   const prefix = (threadSetting.hasOwnProperty("PREFIX")) ? threadSetting.PREFIX : global.config.PREFIX;
 
+  // لو مافي أمر محدد
   if (!command) {
     const arrayInfo = [];
     const page = parseInt(args[0]) || 1;
-    const numberOfOnePage = 100;
+    const numberOfOnePage = 50;
     let i = 0;
 
-    let msg = "🍭･ﾟ: *🍬･ﾟ:* 　　 *:･ﾟ🍭*:･ﾟ🍬\n";
-    msg += "🍬🍭 Bot Commands ᏴϴᏆ. Dora Bot 🍭🍬\n";
-    msg += "🍭･ﾟ: *🍬･ﾟ:* 　　 *:･ﾟ🍭*:･ﾟ🍬\n\n";
+    let msg = "╭─━─━─━─━─━─━─━─━─╮\n";
+    msg += "     ✨ قائمة أوامر البوت ✨\n";
+    msg += "╰─━─━─━─━─━─━─━─━─╯\n\n";
 
-    for (var [name] of (commands)) {
-      arrayInfo.push(name);
+    for (var [name, value] of (commands)) {
+      arrayInfo.push({ name, ...value.config });
     }
 
-    arrayInfo.sort();
+    // ترتيب الأوامر حسب الفئة
+    const categories = {};
+    arrayInfo.forEach(cmd => {
+      if (!categories[cmd.commandCategory]) categories[cmd.commandCategory] = [];
+      categories[cmd.commandCategory].push(cmd);
+    });
 
-    const startSlice = numberOfOnePage * page - numberOfOnePage;
-    i = startSlice;
-    const returnArray = arrayInfo.slice(startSlice, startSlice + numberOfOnePage);
-
-    for (let item of returnArray) {
-      msg += `🍬✨ ${++i}. 『${item}』 ✨🍭\n`;
-      msg += `🍭 Description: ${commands.get(item).config.description}\n`;
-      msg += "━━━━━━━━━━━━━━━ 🍬\n\n";
+    for (let category in categories) {
+      msg += `📂 【 ${category.toUpperCase()} 】 📂\n`;
+      categories[category].forEach(cmd => {
+        msg += `✨ ${++i}. ${cmd.name}\n   📜 ${cmd.description}\n`;
+      });
+      msg += "━━━━━━━━━━━━━━━\n\n";
     }
 
-    msg += `🍭✧･ﾟ:* *:･ﾟ✧🍬\n`;
-    msg += `📖 Page: (${page}/${Math.ceil(arrayInfo.length / numberOfOnePage)})\n`;
-    msg += `👑 Prefix: °${prefix}°\n`;
-    msg += `📜 Total Commands: ${arrayInfo.length}\n`;
-    msg += "🍭✧･ﾟ:* *:･ﾟ✧🍬";
+    msg += `📖 الصفحة: (${page}/${Math.ceil(arrayInfo.length / numberOfOnePage)})\n`;
+    msg += `👑 البادئة: 「 ${prefix} 」\n`;
+    msg += `⚡ عدد الأوامر: ${arrayInfo.length}\n`;
+    msg += "━━━━━━━━━━━━━━━\n";
+    msg += "💡 المطور: كولو سان 🇸🇩";
 
     return api.sendMessage(msg, threadID, async (error, info) => {
       if (autoUnsend) {
@@ -99,6 +103,7 @@ module.exports.run = function ({ api, event, args, getText }) {
     });
   }
 
+  // لو أمر معين
   return api.sendMessage(
     getText("moduleInfo",
       command.config.name,
